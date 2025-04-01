@@ -1,0 +1,37 @@
+volumes:
+  volume-mysql:
+
+networks:
+  network-wordpress:
+
+services:
+
+  wordpress:
+    image: ${WORDPRESS_IMAGE_NAME}:${WORDPRESS_IMAGE_VERSION}
+    container_name: ${WORDPRESS_CONTAINER_NAME}
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
+      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
+      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
+      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+    ports:
+      - ${WORDPRESS_HOST_PORT}:${WORDPRESS_CONTAINER_PORT}
+    volumes:
+      - ./.wordpress-dir:/var/www/html
+    networks:
+      - network-wordpress
+
+  mysql:
+    image: ${MYSQL_IMAGE_NAME}:${MYSQL_IMAGE_VERSION}
+    container_name: ${MYSQL_CONTAINER_NAME}
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD : ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - ${MYSQL_HOST_PORT}:${MYSQL_CONTAINER_PORT}
+    networks:
+      - network-wordpress
