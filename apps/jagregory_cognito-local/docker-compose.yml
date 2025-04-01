@@ -1,0 +1,11 @@
+services:
+
+  cognito-local:
+    image: ${COGNITO_LOCAL_IMAGE_NAME}:$COGNITO_LOCAL_IMAGE_VERSION}
+    container_name: ${COGNITO_LOCAL_CONTAINER_NAME}
+    environment:
+      PORT : ${COGNITO_LOCAL_CONTAINER_PORT}
+    ports:
+      - ${COGNITO_LOCAL_HOST_PORT}:${COGNITO_LOCAL_CONTAINER_PORT}
+    volumes:
+      - ./.cognito:/app/.cognito

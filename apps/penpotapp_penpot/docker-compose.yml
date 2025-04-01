@@ -1,0 +1,141 @@
+x-flags: &penpot-flags
+  PENPOT_FLAGS: enable-registration enable-login-with-password disable-email-verification enable-smtp enable-prepl-server disable-secure-session-cookies
+
+x-uri: &penpot-public-uri
+  PENPOT_PUBLIC_URI: http://localhost:9001
+
+x-body-size: &penpot-http-body-size
+  # Max body size (30MiB); Used for plain requests, should never be
+  # greater than multi-part size
+  PENPOT_HTTP_SERVER_MAX_BODY_SIZE: 31457280
+
+  # Max multipart body size (350MiB)
+  PENPOT_HTTP_SERVER_MAX_MULTIPART_BODY_SIZE: 367001600
+
+volumes:
+  postgres:
+  redis:
+  penpot:
+    
+networks:
+  penpot-network:
+
+services:
+
+  penpot-frontend:
+    image: $PENPOTAPP_FRONTEND_IMAGE_NAME:$PENPOTAPP_FRONTEND_IMAGE_VERSION
+    container_name: $PENPOTAPP_FRONTEND_CONTAINER_NAME
+    restart: always
+    ports:
+      - ${PENPOTAPP_FRONTEND_HOST_PORT}:${PENPOTAPP_FRONTEND_CONTAINER_PORT}
+    env_file: .env
+    volumes:
+      - penpot:/opt/data/assets
+    environment:
+      << : [*penpot-flags, *penpot-http-body-size]
+    depends_on:
+      - penpot-backend
+      - penpot-exporter
+    networks:
+      - penpot-network
+
+  penpot-backend:
+    image: ${PENPOTAPP_BACKEND_IMAGE_NAME}:${PENPOTAPP_BACKEND_IMAGE_VERSION}
+    container_name: ${PENPOTAPP_BACKEND_CONTAINER_NAME}
+    restart: always
+    env_file: .env
+    volumes:
+      - penpot:/opt/data/assets
+    environment:
+      << : [*penpot-flags, *penpot-public-uri, *penpot-http-body-size]
+      PENPOT_PREPL_HOST : 0.0.0.0
+      PENPOT_DATABASE_URI : postgresql://${POSTGRES_CONTAINER_NAME}:${POSTGRES_CONTAINER_PORT}/${POSTGRES_DB}
+      PENPOT_DATABASE_USERNAME : ${POSTGRES_USER}
+      PENPOT_DATABASE_PASSWORD : ${POSTGRES_PASSWORD}
+      PENPOT_REDIS_URI : redis://${REDIS_CONTAINER_NAME}:${REDIS_CONTAINER_PORT}/0
+      PENPOT_ASSETS_STORAGE_BACKEND : assets-fs
+      PENPOT_STORAGE_ASSETS_FS_DIRECTORY : /opt/data/assets
+      PENPOT_TELEMETRY_ENABLED : true
+      PENPOT_TELEMETRY_REFERER : compose
+      PENPOT_SMTP_DEFAULT_FROM : no-reply@example.com
+      PENPOT_SMTP_DEFAULT_REPLY_TO : no-reply@example.com
+      PENPOT_SMTP_HOST : penpot-mailcatch
+      PENPOT_SMTP_PORT : 1025
+      PENPOT_SMTP_USERNAME : 
+      PENPOT_SMTP_PASSWORD :
+      PENPOT_SMTP_TLS : false
+      PENPOT_SMTP_SSL : false
+    depends_on:
+      penpot-redis:
+        condition: service_healthy
+      penpot-postgres:
+        condition: service_healthy
+    networks:
+      - penpot-network
+
+  penpot-exporter:
+    image: ${PENPOTAPP_EXPORTER_IMAGE_NAME}:${PENPOTAPP_EXPORTER_IMAGE_VERSION}
+    container_name: ${PENPOTAPP_EXPORTER_CONTAINER_NAME}
+    restart: always
+    environment:
+      # Don't touch it; this uses internal docker network to
+      # communicate with the frontend.
+      PENPOT_PUBLIC_URI : http://${PENPOTAPP_FRONTEND_CONTAINER_NAME}:${PENPOTAPP_FRONTEND_CONTAINER_PORT}
+
+      ## Redis is used for the websockets notifications.
+      PENPOT_REDIS_URI : redis://${REDIS_CONTAINER_NAME}:${REDIS_CONTAINER_PORT}/0
+    depends_on:
+      penpot-redis:
+        condition: service_healthy
+    networks:
+      - penpot-network
+
+  penpot-redis:
+    image: ${REDIS_IMAGE_NAME}:${REDIS_IMAGE_VERSION}
+    container_name: ${REDIS_CONTAINER_NAME}
+    restart: always
+    ports:
+      - ${REDIS_HOST_PORT}:${REDIS_CONTAINER_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    volumes:
+      - redis:/data
+    networks:
+      - penpot-network
+
+  penpot-postgres:
+    image: ${POSTGRES_IMAGE_NAME}:${POSTGRES_IMAGE_VERSION}
+    container_name: ${POSTGRES_CONTAINER_NAME}
+    restart: always
+    ports:
+      - ${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}
+    stop_signal: SIGINT
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
+      interval: 2s
+      timeout: 10s
+      retries: 5
+      start_period: 2s
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_INITDB_ARGS : --data-checksums
+      POSTGRES_DB : ${POSTGRES_DB}
+      POSTGRES_USER : ${POSTGRES_USER}
+      POSTGRES_PASSWORD : ${POSTGRES_PASSWORD}
+    networks:
+      - penpot-network
+
+  penpot-mailcatcher:
+    image: ${MAILCATCHER_IMAGE_NAME}:${MAILCATCHER_IMAGE_VERSION}
+    container_name: ${MAILCATCHER_CONTAINER_NAME}
+    restart: always
+    ports:
+      - ${MAILCATCHER_UI_HOST_PORT}:${MAILCATCHER_UI_CONTAINER_PORT}
+      - ${MAILCATCHER_SMTP_HOST_PORT}:${MAILCATCHER_SMTP_CONTAINER_PORT}
+    networks:
+      - penpot-network

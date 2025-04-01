@@ -1,0 +1,16 @@
+networks:
+  network-moto:
+
+services:
+
+  moto:
+    image: ${MOTO_IMAGE_NAME}:${MOTO_IMAGE_VERSION}
+    container_name: ${MOTO_CONTAINER_NAME}
+    restart: always
+    environment:
+      MOTO_PORT : ${MOTO_CONTAINER_PORT}
+      MOTO_CALL_RESET_API : true
+    ports:
+      - ${MOTO_HOST_PORT}:${MOTO_CONTAINER_PORT}
+    networks:
+      - network-moto

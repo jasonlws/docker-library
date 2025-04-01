@@ -1,0 +1,14 @@
+services:
+
+  localstack:
+    image: ${LOCALSTACK_IMAGE_NAME}:${LOCALSTACK_IMAGE_VERSION}
+    container_name: ${LOCALSTACK_CONTAINER_NAME}
+    environment:
+      - GATEWAY_LISTEN=0.0.0.0:4566
+      - LOCALSTACK_HOST=localhost.localstack.cloud:4566
+      - DYNAMODB_SHARE_DB=1 # When activated, DynamodDB will use a single database instead of separate databases for each credential and region.
+    ports:
+      - 4566:4566 # LocalStack Gateway
+      - 4510-4513:4510-4513 # External services port range. See also environment variables below.
+    volumes:
+      - "./config/init-s3.py:/etc/localstack/init/ready.d/init.py"

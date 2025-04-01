@@ -1,0 +1,11 @@
+services:
+
+  dynamodb-local:
+    image: ${DYNAMODB_LOCAL_IMAGE_NAME}:${DYNAMODB_LOCAL_IMAGE_VERSION}
+    container_name: ${DYNAMODB_LOCAL_CONTAINER_NAME}
+    ports:
+      - ${DYNAMODB_LOCAL_HOST_PORT}:${DYNAMODB_LOCAL_CONTAINER_PORT}
+    volumes:
+      - "./.dynamodb:/home/dynamodblocal/data"
+    working_dir: /home/dynamodblocal
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"

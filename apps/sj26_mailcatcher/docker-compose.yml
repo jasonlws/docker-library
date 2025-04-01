@@ -1,0 +1,14 @@
+networks:
+  network-mailcatcher:
+
+services:
+
+  mailcatcher:
+    image: ${MAILCATCHER_IMAGE_NAME}:${MAILCATCHER_IMAGE_VERSION}
+    container_name: ${MAILCATCHER_CONTAINER_NAME}
+    restart: always
+    ports:
+      - ${MAILCATCHER_UI_HOST_PORT}:${MAILCATCHER_UI_CONTAINER_PORT}
+      - ${MAILCATCHER_SMTP_HOST_PORT}:${MAILCATCHER_SMTP_CONTAINER_PORT}
+    networks:
+      - network-mailcatcher

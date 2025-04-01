@@ -1,0 +1,24 @@
+volumes:
+  volume-redis:
+
+networks:
+  network-redis:
+
+services:
+
+  redis:
+    image: ${REDIS_IMAGE_NAME}:${REDIS_IMAGE_VERSION}
+    container_name: ${REDIS_CONTAINER_NAME}
+    restart: always
+    ports:
+      - ${REDIS_HOST_PORT}:${REDIS_CONTAINER_PORT}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    volumes:
+      - volume-redis:/data
+    networks:
+      - network-redis

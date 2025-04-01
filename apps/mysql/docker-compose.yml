@@ -1,0 +1,15 @@
+networks:
+  network-mysql:
+
+services:
+
+  mysql:
+    image: ${MYSQL_IMAGE_NAME}:${MYSQL_IMAGE_VERSION}
+    container_name: ${MYSQL_CONTAINER_NAME}
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD : ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - ${MYSQL_HOST_PORT}:${MYSQL_CONTAINER_PORT}
+    networks:
+      - network-mysql

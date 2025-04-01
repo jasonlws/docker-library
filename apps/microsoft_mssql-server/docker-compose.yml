@@ -1,0 +1,16 @@
+networks:
+  network-mssql:
+
+services:
+
+  mssql:
+    image: ${MSSQL_IMAGE_NAME}:${MSSQL_IMAGE_VERSION}
+    container_name: ${MSSQL_CONTAINER_NAME}
+    restart: always
+    environment:
+      ACCEPT_EULA : ${MSSQL_ACCEPT_EULA}
+      MSSQL_SA_PASSWORD : ${MSSQL_SA_PASSWORD}
+    ports:
+      - ${MSSQL_HOST_PORT}:${MSSQL_CONTAINER_PORT}
+    networks:
+      - network-mssql
