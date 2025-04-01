@@ -25,6 +25,20 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7.4.2-alpine
+    restart: always
+    command: redis-server --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_storage:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      
   n8n:
     image: ${N8N_IMAGE_NAME}:${N8N_IMAGE_VERSION}
     container_name: ${N8N_CONTAINER_NAME}
