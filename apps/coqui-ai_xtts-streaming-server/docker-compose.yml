@@ -1,0 +1,36 @@
+networks:
+  network-xtts:
+
+services:
+
+  xtts-server:
+    image: ${XTTS_SERVER_IMAGE_NAME}:${XTTS_SERVER_IMAGE_VERSION}
+    container_name: ${XTTS_SERVER_CONTAINER_NAME}
+    restart: always
+    environment:
+      COQUI_TOS_AGREED : 1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 120s
+      timeout: 240s
+      retries: 20
+    ports:
+      - ${XTTS_SERVER_HOST_PORT}:${XTTS_SERVER_CONTAINER_PORT}
+    volumes:
+      - ./.xtts-server:/root/.local/share/tts/
+    networks:
+      - network-xtts
+
+  xtts-ui:
+    image: ${XTTS_UI_IMAGE_NAME}:${XTTS_UI_IMAGE_VERSION}
+    container_name: ${XTTS_UI_CONTAINER_NAME}
+    restart: always
+    environment:
+      SERVER_URL : ${XTTS_UI_SERVER_URL}
+    ports:
+      - ${XTTS_UI_HOST_PORT}:${XTTS_UI_CONTAINER_PORT}
+    depends_on:
+      xtts-server:
+        condition: service_healthy
+    networks:
+      - network-xtts
